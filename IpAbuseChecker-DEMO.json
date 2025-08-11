@@ -1,0 +1,204 @@
+{
+  "name": "IpAbuseChecker-DEMO",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e659c8db-4814-4b69-88d0-9f6ef4069acf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        -16
+      ],
+      "id": "54932edb-e35b-4fb2-8616-d62021af52a2",
+      "name": "Webhook",
+      "webhookId": "e659c8db-4814-4b69-88d0-9f6ef4069acf"
+    },
+    {
+      "parameters": {
+        "url": "https://api.abuseipdb.com/api/v2/check",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ipAddress",
+              "value": "\"type ip address here ex: 8.8.8.8\""
+            },
+            {
+              "name": "maxAgeinDays",
+              "value": "90"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "\"paste api key here\""
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        -16
+      ],
+      "id": "7ca135d6-38ee-4496-9bfc-c307559527e5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.data;\n\nreturn [\n  {\n    json: {\n      content: `🔍 **IP Reputation Check**\\n` +\n               `IP: ${data.ipAddress}\\n` +\n               `Abuse Score: ${data.abuseConfidenceScore}/100\\n` +\n               `Country: ${data.countryCode}\\n` +\n               `Last Reported: ${data.lastReportedAt || 'Never'}`\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "fa1c6a58-2a7f-4b30-afff-8657eb41c2bf",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -32
+      ],
+      "id": "25fdf34f-08c9-400b-8b8b-9978949b6b9e",
+      "name": "Discord",
+      "webhookId": "aa284aa3-f081-4c64-a494-8a31b2267d4b",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "vnT7aZfpl6Cx6ImS",
+          "name": "Discord Webhook account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=I want you to review the content of the ip check than give me feedback on what you think in your best vin diesel impression\n{{ $json.content }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        400,
+        -128
+      ],
+      "id": "b4315b1d-cd41-435b-b405-b7ec4d65a473",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        48
+      ],
+      "id": "277747e1-6b90-44b8-9574-05e7f62b11b4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "02LgPRXCru8jY5yX",
+          "name": "OpenAi account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "39329e9c-e021-42f1-af8f-d0805a227901",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cf7b088ed9b3a782ba29b0740ffe7ea806134e88b09f15a002b6d908268254a"
+  },
+  "id": "o1TExUy0L9G2aO68",
+  "tags": []
+}
